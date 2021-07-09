@@ -1,2 +1,2 @@
 # eth-contract
-a small ethereum contract token
+a small ethereum contract
