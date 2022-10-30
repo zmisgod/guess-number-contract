@@ -8,8 +8,8 @@ contract lotteryGame is Ownable {
     string public lotteryTitle; //当前幸运数字
     uint16 public lotteryReward; //奖金
     uint8 public nowStatus; //当前状态 0未开始 1进行中 2待开奖 2已结束
-    uint8 public maxUserJoined;//最多N个人参与
-    uint8 public maxUserReward;//最多N个人获奖
+    uint8 public maxUserJoinedNumber = 1; //最多N个人参与
+    uint8 public maxUserRewardNumber = 1; //最多N个人获奖
 
     //用户猜的数字
     mapping(address => uint8) public userGuest;
@@ -26,8 +26,12 @@ contract lotteryGame is Ownable {
 
     function userGuestOne(uint8 userGuestNum) public payable {
         require((nowStatus == 1), "lottery not open yet");
+        require(userGuest[msg.sender] == 0, "user has joined the game");
+        require(
+            userGuestList.length < maxUserJoinedNumber,
+            "out of joined number"
+        );
         commonValidate(userGuestNum);
-        require(userGuest[msg.sender] > 0);
         userGuest[msg.sender] = userGuestNum;
         userGuestList.push(
             userGuestItem({
@@ -38,13 +42,16 @@ contract lotteryGame is Ownable {
         );
     }
 
-    function commonValidate(uint8 num) pure public {
+    function commonValidate(uint8 num) public pure {
         require((num >= 1 && num <= 6), "num is out of range");
     }
 
     function openReward() public onlyOwner {
         for (uint256 i; i < userGuestList.length; i++) {
-            if (userGuestList[i].guestNum == lotteryHitNumber && ) {
+            if (
+                userGuestList[i].guestNum == lotteryHitNumber &&
+                userHitRewards.length < maxUserRewardNumber
+            ) {
                 userHitRewards.push(userGuestList[i].userAddress);
             }
         }
@@ -54,46 +61,78 @@ contract lotteryGame is Ownable {
         return userHitRewards;
     }
 
-    function resetLotteryStatus() public onlyOwner {
+    function resetLotteryStatus() external onlyOwner {
         nowStatus = 0;
     }
 
-    function startUserJoinGame() public onlyOwner {
-      nowStatus = 1;
+    function startUserJoinGame() external onlyOwner {
+        nowStatus = 1;
     }
 
-    function stopUserJoinGame() public onlyOwner {
-      nowStatus = 2;
+    function stopUserJoinGame() external onlyOwner {
+        nowStatus = 2;
     }
 
-    function stopGame() public onlyOwner {
-      nowStatus = 3;
+    function stopGame() external onlyOwner {
+        nowStatus = 3;
     }
 
     function setLottetryInfo(
         string memory title,
-        uint8 hitNumber,
+        uint8 userJoinedNum,
+        uint8 userRewardNum,
         uint16 reward
-    ) public onlyOwner {
-        commonValidate(hitNumber);
-        lotteryHitNumber = hitNumber;
+    ) external onlyOwner {
+        maxUserJoinedNumber = userJoinedNum;
+        maxUserRewardNumber = userRewardNum;
         lotteryTitle = title;
         lotteryReward = reward;
     }
 
-    function getNowLotteryTitle() public view returns (string memory) {
+    function setLotteryHitNumber(uint8 num) external onlyOwner {
+        require(nowStatus == 2, "status is not wait open reward");
+        lotteryHitNumber = num;
+        openReward();
+    }
+
+    function getLotteryTitle() public view returns (string memory) {
         return lotteryTitle;
     }
 
-    function getNowStatus() public view returns (uint8){
+    function getNowStatus() public view returns (uint8) {
         return nowStatus;
     }
 
-    function getNowLottertyHitNumber() public view returns (uint8) {
+    function getLottertyHitNumber() public view returns (uint8) {
         return lotteryHitNumber;
     }
 
-    function getNowLotteryReward() public view returns (uint16) {
+    function getLotteryReward() public view returns (uint16) {
         return lotteryReward;
+    }
+
+    function getUserGuestItem() public view returns (userGuestItem[] memory) {
+        return userGuestList;
+    }
+
+    function getMaxUserJoinedNumber() public view returns (uint8) {
+        return maxUserJoinedNumber;
+    }
+
+    function getMaxUserRewardNumber() public view returns (uint8) {
+        return maxUserRewardNumber;
+    }
+
+    function getUserGuessNumber() public view returns (uint8) {
+        return userGuest[msg.sender];
+    }
+
+    function checkUserIsReward() public view returns (bool) {
+        for(uint8 i = 0;i<userHitRewards.length;i++) {
+            if(userHitRewards[i] == msg.sender) {
+                return true;
+            }
+        }
+        return false;
     }
 }

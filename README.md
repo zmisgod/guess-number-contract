@@ -16,3 +16,6 @@ add some contract code
 
 change web code
 - `cd web && npm insatll && npm run dev`
+
+## config
+change `contractAddress(your contract address)` and `adminAddress(your wallet address)` in `web/lib/web3.js`

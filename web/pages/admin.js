@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
-import { contractAddress, contractABI } from './../lib/web3';
+import { contractAddress, contractABI, adminAddress } from './../lib/web3';
 import { ethers } from 'ethers';
 
 export default function Client() {
@@ -12,13 +12,13 @@ export default function Client() {
     return contract;
   }
 
-  const adminAddress = "0x8bf0e6b2b2fe7c9467e9c6cc3c218f2cdf456759";
-
   const [accounts, setAccounts] = useState([]);
   const [title, setTitle] = useState("");
   const [nowStatus, setNowStatus] = useState(0)
   const [reward, setReward] = useState(0);
   const [hitNumber, setHitNumber] = useState(0);
+  const [maxUserJoinedNumber, setMaxUserJoinedNumber] = useState(0);
+  const [maxUserRewardNumber, setMaxUserRewardNumber] = useState(0);
 
   const onConnect = async () => {
     let res = await  window.ethereum.request({ method: "eth_requestAccounts" });
@@ -43,6 +43,13 @@ export default function Client() {
     setHitNumber(e.target.value)
   }
 
+  const onChangeUserJoinedMaxNumber = (e) => {
+    setMaxUserJoinedNumber(e.target.value)
+  }
+
+  const onChangeUserRewardMaxNumber = (e) => {
+    setMaxUserRewardNumber(e.target.value)
+  }
 
   const fetchLotteryStatus = async () => {
     let contract = await getContract();
@@ -51,25 +58,82 @@ export default function Client() {
 
   const fetchLotteryTitle = async () => {
     let contract = await getContract();
-    contract.getNowLotteryTitle.call().then(setTitle);
+    contract.getLotteryTitle.call().then(setTitle);
   }
 
   const fetchLotteryReward = async () => {
     let contract = await getContract();
-    contract.getNowLotteryReward.call().then(setReward);
+    contract.getLotteryReward.call().then(setReward);
+  }
+
+  const fetchMaxUserJoinedNumber = async () => {
+    let contract = await getContract();
+    contract.getMaxUserJoinedNumber.call().then(setMaxUserJoinedNumber);
+  }
+
+  const fetchMaxUserRewardNumber = async () => {
+    let contract = await getContract();
+    contract.getMaxUserRewardNumber.call().then(setMaxUserRewardNumber);
+  }
+
+  const fetchHitNumber = async () => {
+    let contract = await getContract();
+    contract.getLottertyHitNumber.call().then(setHitNumber);
   }
 
   useEffect(() => {
     fetchLotteryStatus();
     fetchLotteryTitle();
     fetchLotteryReward();
+    fetchMaxUserJoinedNumber();
+    fetchMaxUserRewardNumber();
+    fetchHitNumber();
   }, [])
-
 
   const saveData = async () => {
     const contract = await getContract();
     try{
-        let data = await contract.setLottetryInfo(title, parseInt(hitNumber, 10), parseInt(reward, 10))
+        let data = await contract.setLottetryInfo(title, parseInt(maxUserJoinedNumber, 10), parseInt(maxUserRewardNumber, 10), parseInt(reward, 10))
+        console.log(data)
+    }catch(e) {
+        alert(e)
+    }
+  }
+
+  const prepareOpenReward = async () => {
+    const contract = await getContract();
+    try{
+        let data = await contract.stopUserJoinGame()
+        console.log(data)
+    }catch(e) {
+        alert(e)
+    }
+  }
+
+  const startGame = async() => {
+    const contract = await getContract();
+    try{
+        let data = await contract.startUserJoinGame()
+        console.log(data)
+    }catch(e) {
+        alert(e)
+    }
+  }
+
+  const saveHitNumber = async() => {
+    const contract = await getContract();
+    try{
+        let data = await contract.setLotteryHitNumber(parseInt(hitNumber, 10))
+        console.log(data)
+    }catch(e) {
+        alert(e)
+    }
+  }
+
+  const announceReward = async() => {
+    const contract = await getContract();
+    try{
+        let data = await contract.stopGame()
         console.log(data)
     }catch(e) {
         alert(e)
@@ -99,11 +163,31 @@ export default function Client() {
                         <input value={reward}  onChange={onChangeReward}></input>将金
                     </div>
                     <div>
-                        <input value={hitNumber}  onChange={onChangeHitNumber}></input>幸运数字
+                        <input value={maxUserJoinedNumber}  onChange={onChangeUserJoinedMaxNumber} disabled={nowStatus !== 0}></input>最多用户参与数
+                    </div>
+                    <div>
+                        <input value={maxUserRewardNumber}  onChange={onChangeUserRewardMaxNumber} disabled={nowStatus !== 0}></input>最多用户中奖人数
                     </div>
                     <div>
                         <button onClick={saveData}>保存</button>
                     </div>
+                    {
+                      nowStatus === 2 ? (
+                        <div>
+                          <div>
+                              <input value={hitNumber} onChange={onChangeHitNumber}></input>获奖数字
+                          </div>
+                          <div>
+                              <button onClick={saveHitNumber}>设置获奖数字</button>
+                          </div>
+                        </div>
+                      ):''
+                    }
+                    {
+                      nowStatus === 3 ? (
+                        <div>幸运数字：{hitNumber}</div>
+                      ):''
+                    }
                     <div>
                         {
                             nowStatus !== 0 ? (
@@ -111,18 +195,18 @@ export default function Client() {
                             ):''
                         }
                         {
-                            nowStatus !== 1 ? (
-                                <button>开始</button>
+                            nowStatus === 0 ? (
+                                <button onClick={startGame}>开始游戏</button>
                             ):''
                         }
                         {
                             nowStatus !== 2 ? (
-                                <button>开奖</button>
+                                <button onClick={prepareOpenReward}>开奖</button>
                             ):''
                         }
                         {
                             nowStatus !== 3 ? (
-                                <button>结束</button>
+                                <button onClick={announceReward}>结束</button>
                             ):''
                         }
                     </div>

@@ -16,17 +16,47 @@ export default function Client() {
   const [title, setTitle] = useState("");
   const [nowStatus, setNowStatus] = useState(0)
   const [reward, setReward] = useState(0);
+  const [maxUserJoinedNumber, setMaxUserJoinedNumber] = useState(0);
+  const [maxUserRewardNumber, setMaxUserRewardNumber] = useState(0);
+  const [userGuessNumber, setUserGuessNumber] = useState(0);
+  const [canUserGuess, setCanUserGuess] = useState(true);
   const [joinList, setJoinList] = useState([]);
+  const [isHitReward, setIsHitReward] = useState(false);
 
   useEffect(() => {
     window.ethereum.request({ method: "eth_accounts" }).then(setAccounts);
     fetchLotteryStatus();
     fetchLotteryTitle();
     fetchLotteryReward();
+    fetchMaxUserJoinedNumber();
+    fetchMaxUserRewardNumber();
+    fetchUserJoinedList();
+    fetchUserGuessedNumber();
+    fetchIsUserHitReward();
   }, [])
 
   const onConnect = async () => {
     window.ethereum.request({ method: "eth_requestAccounts" }).then(setAccounts);
+  }
+
+  const fetchIsUserHitReward = async () => {
+    let contract = await getContract();
+    contract.checkUserIsReward.call().then(setIsHitReward);
+  }
+
+  const fetchUserJoinedList = async () => {
+    let contract = await getContract();
+    contract.getUserGuestItem.call().then(setJoinList);
+  }
+
+  const fetchUserGuessedNumber = async () => {
+    let contract = await getContract();
+    contract.getUserGuessNumber.call().then(res => {
+      if(res > 0) {
+        setCanUserGuess(false);
+        setUserGuessNumber(res);
+      }
+    });
   }
 
   const fetchLotteryStatus = async () => {
@@ -36,12 +66,36 @@ export default function Client() {
 
   const fetchLotteryTitle = async () => {
     let contract = await getContract();
-    contract.getNowLotteryTitle.call().then(setTitle);
+    contract.getLotteryTitle.call().then(setTitle);
   }
 
   const fetchLotteryReward = async () => {
     let contract = await getContract();
-    contract.getNowLotteryReward.call().then(setReward);
+    contract.getLotteryReward.call().then(setReward);
+  }
+
+  const fetchMaxUserJoinedNumber = async () => {
+    let contract = await getContract();
+    contract.getMaxUserJoinedNumber.call().then(setMaxUserJoinedNumber);
+  }
+
+  const fetchMaxUserRewardNumber = async () => {
+    let contract = await getContract();
+    contract.getMaxUserRewardNumber.call().then(setMaxUserRewardNumber);
+  }
+
+  const onChangeUserGuessNumber = (e) => {
+    setUserGuessNumber(e.target.value);
+  }
+
+  const onSave = async () => {
+    const contract = await getContract();
+      try{
+          let data = await contract.userGuestOne(parseInt(userGuessNumber))
+          alert("参与成功")
+      }catch(e) {
+          alert(e.data.message)
+      }
   }
 
   return (
@@ -59,7 +113,7 @@ export default function Client() {
         }
         {
           nowStatus === 0 ? (
-            <div>暂未开始</div>
+            <div>游戏暂未开始</div>
           ) : ''
         }
         {
@@ -79,7 +133,33 @@ export default function Client() {
         }
         <div>标题：{title}</div>
         <div>奖励：{reward}</div>
-        <div>参与任务：{joinList.length}人</div>
+        <div>最多参与人数：{maxUserJoinedNumber}</div>
+        <div>最多获奖人数：{maxUserRewardNumber}</div>
+        <div>当前参与人数：{joinList.length}人</div>
+        {
+          nowStatus === 2 || nowStatus === 3 ? (
+            <div>你猜的数字：{userGuessNumber}</div>
+          ):''
+        }
+        {
+          nowStatus === 3 ? (
+            isHitReward ? (
+              <div>恭喜，您已获奖</div>
+            ):(
+              <div>对不起，您未获奖</div>
+            )
+          ):''
+        }
+        <div>
+        {
+          nowStatus === 1 ? (
+            <div>
+              <input value={userGuessNumber} onChange={onChangeUserGuessNumber} disabled={!canUserGuess}></input>
+              <button onClick={onSave}  disabled={!canUserGuess}>点击参与</button>
+            </div>
+          ):''
+        }
+        </div> 
       </main>
     </div>
   )
