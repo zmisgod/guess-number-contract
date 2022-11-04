@@ -16,6 +16,7 @@ export default function Client() {
   const [title, setTitle] = useState("");
   const [nowStatus, setNowStatus] = useState(0)
   const [reward, setReward] = useState(0);
+  const [ownToken, setOwnToken] = useState(0);
   const [hitNumber, setHitNumber] = useState(0);
   const [maxUserJoinedNumber, setMaxUserJoinedNumber] = useState(0);
   const [maxUserRewardNumber, setMaxUserRewardNumber] = useState(0);
@@ -81,6 +82,17 @@ export default function Client() {
     contract.getLottertyHitNumber.call().then(setHitNumber);
   }
 
+  const fetchUserOwnToken = async () => {
+    if(accounts.length > 0 ) {
+      let contract = await getContract()
+      contract.balanceOf(accounts[0]).then(res => {
+        setOwnToken(ethers.utils.formatUnits(res, 18))
+      });
+    }else{
+      setOwnToken(0)
+    }
+  }
+
   useEffect(() => {
     fetchLotteryStatus();
     fetchLotteryTitle();
@@ -89,6 +101,10 @@ export default function Client() {
     fetchMaxUserRewardNumber();
     fetchHitNumber();
   }, [])
+
+  useEffect(() => {
+    fetchUserOwnToken()
+  }, [accounts])
 
   const saveData = async () => {
     const contract = await getContract();
@@ -149,7 +165,9 @@ export default function Client() {
       </Head>
       <main >
         {
-          accounts.length > 0 ? (<div >{accounts[0]}</div>) : (
+          accounts.length > 0 ? (<div >
+          {accounts[0]}, I have {ownToken} GN
+          </div>) : (
             <div onClick={onConnect}>connect wallet</div>
           )
         }
@@ -201,12 +219,12 @@ export default function Client() {
                         }
                         {
                             nowStatus !== 2 ? (
-                                <button onClick={prepareOpenReward}>开奖</button>
+                                <button onClick={prepareOpenReward}>设置幸运数字</button>
                             ):''
                         }
                         {
                             nowStatus !== 3 ? (
-                                <button onClick={announceReward}>结束</button>
+                                <button onClick={announceReward}>公布数字</button>
                             ):''
                         }
                     </div>

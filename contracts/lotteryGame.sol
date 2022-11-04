@@ -2,8 +2,9 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./gnCoin.sol";
 
-contract lotteryGame is Ownable {
+contract lotteryGame is Ownable, GN {
     uint8 public lotteryHitNumber; //命中的参数 1-6
     string public lotteryTitle; //当前幸运数字
     uint16 public lotteryReward; //奖金

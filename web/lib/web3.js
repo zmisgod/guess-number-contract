@@ -2,7 +2,7 @@ import lotteryGame from "./../../build/contracts/lotteryGame.json"
 export const contractABI = lotteryGame.abi;
 
 // YOUR WALLECT ADDRESS
-export const adminAddress = "0x8bf0e6b2b2fe7c9467e9c6cc3c218f2cdf456759"
+export const adminAddress = "0x12F1586171bBAD6B7d9Ad41f2cCbaa1585E437c2"
 
 //contract address
-export const contractAddress = "0xC9f4fEd962AaC2EA38bC214478c0BBe5c60Cdbf1";
+export const contractAddress = "0x961ebB3fC029fb4D093EE24b1EBA84fC20Bf950E";
