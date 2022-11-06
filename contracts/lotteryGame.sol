@@ -11,6 +11,7 @@ contract lotteryGame is Ownable, GN {
     uint8 public nowStatus; //当前状态 0未开始 1进行中 2待开奖 2已结束
     uint8 public maxUserJoinedNumber = 1; //最多N个人参与
     uint8 public maxUserRewardNumber = 1; //最多N个人获奖
+    uint256 public guestEndTime = 0; //最后猜奖时间
 
     //用户猜的数字
     mapping(address => uint8) public userGuest;
@@ -24,6 +25,8 @@ contract lotteryGame is Ownable, GN {
 
     //获奖用户
     address[] public userHitRewards;
+    //是否发奖
+    mapping(address => bool) isSendUserMoneyMap;
 
     function userGuestOne(uint8 userGuestNum) public payable {
         require((nowStatus == 1), "lottery not open yet");
@@ -38,7 +41,7 @@ contract lotteryGame is Ownable, GN {
             userGuestItem({
                 userAddress: msg.sender,
                 guestNum: userGuestNum,
-                guestTime: 0
+                guestTime: block.timestamp
             })
         );
     }
@@ -56,14 +59,47 @@ contract lotteryGame is Ownable, GN {
                 userHitRewards.push(userGuestList[i].userAddress);
             }
         }
+        sendUserMoney();
+    }
+
+    function sendUserMoney() public payable onlyOwner {
+        if (lotteryReward == 0) {
+            return;
+        }
+        for (uint256 i; i < userHitRewards.length; i++) {
+            if (isSendUserMoneyMap[userHitRewards[i]]) {
+                continue;
+            }
+            transfer(userHitRewards[i], lotteryReward);
+            isSendUserMoneyMap[userHitRewards[i]] = true;
+        }
     }
 
     function getUserHitRewardsList() public view returns (address[] memory) {
         return userHitRewards;
     }
 
+    //reset this game all of data to empty
     function resetLotteryStatus() external onlyOwner {
+        lotteryHitNumber = 0;
+        lotteryTitle = "";
+        lotteryReward = 0;
         nowStatus = 0;
+        maxUserJoinedNumber = 1;
+        maxUserRewardNumber = 1;
+        guestEndTime = 0;
+        for (uint256 i = 0; i < userGuestList.length; i++) {
+            delete (userGuest[userGuestList[i].userAddress]);
+        }
+        for (uint256 i = 0; i < userGuestList.length; i++) {
+            userGuestList.pop();
+        }
+        for (uint256 i = 0; i < userHitRewards.length; i++) {
+            delete (isSendUserMoneyMap[userHitRewards[i]]);
+        }
+        for (uint256 i = 0; i < userHitRewards.length; i++) {
+            userHitRewards.pop();
+        }
     }
 
     function startUserJoinGame() external onlyOwner {
@@ -129,8 +165,8 @@ contract lotteryGame is Ownable, GN {
     }
 
     function checkUserIsReward() public view returns (bool) {
-        for(uint8 i = 0;i<userHitRewards.length;i++) {
-            if(userHitRewards[i] == msg.sender) {
+        for (uint8 i = 0; i < userHitRewards.length; i++) {
+            if (userHitRewards[i] == msg.sender) {
                 return true;
             }
         }

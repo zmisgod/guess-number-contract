@@ -5,4 +5,4 @@ export const contractABI = lotteryGame.abi;
 export const adminAddress = "0x12F1586171bBAD6B7d9Ad41f2cCbaa1585E437c2"
 
 //contract address
-export const contractAddress = "0x961ebB3fC029fb4D093EE24b1EBA84fC20Bf950E";
+export const contractAddress = "0x1f7645B12ab3fc3F4E83a4667B5e902DBfCb8f73";
