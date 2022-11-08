@@ -1,7 +1,5 @@
 import Head from 'next/head'
-import { useEffect, useState,useContext } from 'react'
-import { ethers } from 'ethers';
-import { contractAddress, contractABI, adminAddress } from './../lib/web3';
+import { useContext } from 'react'
 import { ContractContext } from './../context/contract'
 
 export default function Client() {
