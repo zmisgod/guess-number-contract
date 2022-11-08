@@ -1,102 +1,12 @@
 import Head from 'next/head'
-import { useEffect, useState } from 'react'
-import { contractAddress, contractABI } from './../lib/web3';
+import { useEffect, useState,useContext } from 'react'
 import { ethers } from 'ethers';
+import { contractAddress, contractABI, adminAddress } from './../lib/web3';
+import { ContractContext } from './../context/contract'
 
 export default function Client() {
 
-  const getContract = async () => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const contract = new ethers.Contract(contractAddress, contractABI, signer);
-    return contract;
-  }
-
-  const [accounts, setAccounts] = useState([]);
-  const [title, setTitle] = useState("");
-  const [nowStatus, setNowStatus] = useState(0)
-  const [reward, setReward] = useState(0);
-  const [maxUserJoinedNumber, setMaxUserJoinedNumber] = useState(0);
-  const [maxUserRewardNumber, setMaxUserRewardNumber] = useState(0);
-  const [userGuessNumber, setUserGuessNumber] = useState(0);
-  const [canUserGuess, setCanUserGuess] = useState(true);
-  const [joinList, setJoinList] = useState([]);
-  const [isHitReward, setIsHitReward] = useState(false);
-
-  useEffect(() => {
-    window.ethereum.request({ method: "eth_accounts" }).then(setAccounts);
-    fetchLotteryStatus();
-    fetchLotteryTitle();
-    fetchLotteryReward();
-    fetchMaxUserJoinedNumber();
-    fetchMaxUserRewardNumber();
-    fetchUserJoinedList();
-    fetchUserGuessedNumber();
-    fetchIsUserHitReward();
-  }, [])
-
-  const onConnect = async () => {
-    window.ethereum.request({ method: "eth_requestAccounts" }).then(setAccounts);
-  }
-
-  const fetchIsUserHitReward = async () => {
-    let contract = await getContract();
-    contract.checkUserIsReward.call().then(setIsHitReward);
-  }
-
-  const fetchUserJoinedList = async () => {
-    let contract = await getContract();
-    contract.getUserGuestItem.call().then(setJoinList);
-  }
-
-  const fetchUserGuessedNumber = async () => {
-    let contract = await getContract();
-    contract.getUserGuessNumber.call().then(res => {
-      if (res > 0) {
-        setCanUserGuess(false);
-        setUserGuessNumber(res);
-      }
-    });
-  }
-
-  const fetchLotteryStatus = async () => {
-    let contract = await getContract();
-    contract.getNowStatus.call().then(setNowStatus);
-  }
-
-  const fetchLotteryTitle = async () => {
-    let contract = await getContract();
-    contract.getLotteryTitle.call().then(setTitle);
-  }
-
-  const fetchLotteryReward = async () => {
-    let contract = await getContract();
-    contract.getLotteryReward.call().then(setReward);
-  }
-
-  const fetchMaxUserJoinedNumber = async () => {
-    let contract = await getContract();
-    contract.getMaxUserJoinedNumber.call().then(setMaxUserJoinedNumber);
-  }
-
-  const fetchMaxUserRewardNumber = async () => {
-    let contract = await getContract();
-    contract.getMaxUserRewardNumber.call().then(setMaxUserRewardNumber);
-  }
-
-  const onChangeUserGuessNumber = (e) => {
-    setUserGuessNumber(e.target.value);
-  }
-
-  const onSave = async () => {
-    const contract = await getContract();
-    try {
-      let data = await contract.userGuestOne(parseInt(userGuessNumber))
-      alert("参与成功")
-    } catch (e) {
-      alert(e.data.message)
-    }
-  }
+  const contractContext = useContext(ContractContext)
 
   return (
     <div>
@@ -107,46 +17,46 @@ export default function Client() {
       </Head>
       <main >
         {
-          accounts.length > 0 ? (<div >{accounts[0]}</div>) : (
-            <div onClick={onConnect}>connect wallet</div>
+          contractContext.accounts.length > 0 ? (<div >{contractContext.accounts[0]}</div>) : (
+            <div onClick={contractContext.onConnect}>connect wallet</div>
           )
         }
         {
-          nowStatus === 0 ? (
+          contractContext.nowStatus === 0 ? (
             <div>游戏暂未开始</div>
           ) : ''
         }
         {
-          nowStatus === 1 ? (
+          contractContext.nowStatus === 1 ? (
             <div>进行中</div>
           ) : ''
         }
         {
-          nowStatus === 2 ? (
+          contractContext.owStatus === 2 ? (
             <div>待开奖</div>
           ) : ''
         }
         {
-          nowStatus === 3 ? (
+          contractContext.nowStatus === 3 ? (
             <div>已结束</div>
           ) : ''
         }
         {
-          nowStatus !== 0 ? (
+          contractContext.nowStatus !== 0 ? (
             <div>
-              <div>标题：{title}</div>
-              <div>奖励：{reward}</div>
-              <div>最多参与人数：{maxUserJoinedNumber}</div>
-              <div>最多获奖人数：{maxUserRewardNumber}</div>
-              <div>当前参与人数：{joinList.length}人</div>
+              <div>标题：{contractContext.title}</div>
+              <div>奖励：{contractContext.reward}</div>
+              <div>最多参与人数：{contractContext.maxUserJoinedNumber}</div>
+              <div>最多获奖人数：{contractContext.maxUserRewardNumber}</div>
+              <div>当前参与人数：{contractContext.joinList.length}人</div>
               {
-                nowStatus === 2 || nowStatus === 3 ? (
-                  <div>你猜的数字：{userGuessNumber}</div>
+                contractContext.nowStatus === 2 || contractContext.nowStatus === 3 ? (
+                  <div>你猜的数字：{contractContext.userGuessNumber}</div>
                 ) : ''
               }
               {
-                nowStatus === 3 ? (
-                  isHitReward ? (
+                contractContext.nowStatus === 3 ? (
+                  contractContext.isHitReward ? (
                     <div>恭喜，您已获奖</div>
                   ) : (
                     <div>对不起，您未获奖</div>
@@ -155,10 +65,10 @@ export default function Client() {
               }
               <div>
                 {
-                  nowStatus === 1 ? (
+                  contractContext.nowStatus === 1 ? (
                     <div>
-                      <input value={userGuessNumber} onChange={onChangeUserGuessNumber} disabled={!canUserGuess}></input>
-                      <button onClick={onSave} disabled={!canUserGuess}>点击参与</button>
+                      <input value={contractContext.userGuessNumber} onChange={contractContext.onChangeUserGuessNumber} disabled={!contractContext.canUserGuess}></input>
+                      <button onClick={contractContext.onGuessANumber} disabled={!contractContext.canUserGuess}>点击参与</button>
                     </div>
                   ) : ''
                 }
