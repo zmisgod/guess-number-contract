@@ -24,26 +24,26 @@ export const ContractContextProvider = function ({ children }) {
     const fetchUserGuessedNumber = async () => {
         let contract = await getContract();
         contract.getUserGuessNumber.call().then(res => {
-          if (res > 0) {
-            setCanUserGuess(false);
-            setUserGuessNumber(res);
-          }
+            if (res > 0) {
+                setCanUserGuess(false);
+                setUserGuessNumber(res);
+            }
         });
-      }
-    
-      const onChangeUserGuessNumber = (e) => {
+    }
+
+    const onChangeUserGuessNumber = (e) => {
         setUserGuessNumber(e.target.value);
-      }
-    
-      const onGuessANumber = async () => {
+    }
+
+    const onGuessANumber = async () => {
         const contract = await getContract();
         try {
-          let data = await contract.userGuestOne(parseInt(userGuessNumber))
-          alert("参与成功")
+            let data = await contract.userGuestOne(parseInt(userGuessNumber))
+            alert("参与成功")
         } catch (e) {
-          alert(e.data.message)
+            alert(e.data.message)
         }
-      }
+    }
 
     const getContract = async () => {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -69,7 +69,9 @@ export const ContractContextProvider = function ({ children }) {
 
     const fetchLotteryReward = async () => {
         let contract = await getContract();
-        contract.getLotteryReward.call().then(setReward);
+        contract.getLotteryReward.call().then((res) => {
+            setReward(parseInt(ethers.BigNumber.from(res), 10))
+        });
     }
 
     const fetchMaxUserJoinedNumber = async () => {
@@ -91,6 +93,7 @@ export const ContractContextProvider = function ({ children }) {
         if (accounts.length > 0) {
             let contract = await getContract()
             contract.balanceOf(accounts[0]).then(res => {
+                console.log(res)
                 setOwnToken(ethers.utils.formatUnits(res, 18))
             });
         } else {
@@ -102,18 +105,6 @@ export const ContractContextProvider = function ({ children }) {
         let contract = await getContract();
         contract.checkUserIsReward.call().then(setIsHitReward);
     }
-
-    useEffect(() => {
-        fetchLotteryStatus();
-        fetchLotteryTitle();
-        fetchLotteryReward();
-        fetchMaxUserJoinedNumber();
-        fetchMaxUserRewardNumber();
-        fetchHitNumber();
-        fetchUserJoinedList();
-        fetchIsUserHitReward();
-        fetchUserGuessedNumber();
-    }, [])
 
     const onAdminConnect = async () => {
         let res = await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -127,7 +118,18 @@ export const ContractContextProvider = function ({ children }) {
     }
 
     useEffect(() => {
-        fetchUserOwnToken()
+        if (accounts.length > 0) {
+            fetchUserOwnToken()
+            fetchIsUserHitReward();
+            fetchUserGuessedNumber();
+            fetchLotteryStatus();
+            fetchLotteryTitle();
+            fetchLotteryReward();
+            fetchMaxUserJoinedNumber();
+            fetchMaxUserRewardNumber();
+            fetchHitNumber();
+            fetchUserJoinedList();
+        }
     }, [accounts])
 
     const onChangeTitle = (e) => {
@@ -148,6 +150,11 @@ export const ContractContextProvider = function ({ children }) {
 
     const onChangeUserRewardMaxNumber = (e) => {
         setMaxUserRewardNumber(e.target.value)
+    }
+
+    const doTransferToken = async (address, wei) => {
+        let contract = await getContract();
+        return contract.transfer(address, wei)
     }
 
     const saveData = async () => {
@@ -200,12 +207,22 @@ export const ContractContextProvider = function ({ children }) {
         }
     }
 
+    const restartGame = async () => {
+        const contract = await getContract();
+        try {
+            let data = await contract.resetLotteryStatus()
+            console.log(data)
+        } catch (e) {
+            alert(e)
+        }
+    }
+
     return (
         <ContractContext.Provider value={{
-            accounts, title, nowStatus, reward, ownToken, hitNumber, maxUserJoinedNumber, maxUserRewardNumber,joinList,isHitReward, canUserGuess,userGuessNumber,
+            accounts, title, nowStatus, reward, ownToken, hitNumber, maxUserJoinedNumber, maxUserRewardNumber, joinList, isHitReward, canUserGuess, userGuessNumber,
             onAdminConnect, saveHitNumber, announceReward, startGame, prepareOpenReward, onConnect,
             saveData, onChangeUserRewardMaxNumber, onChangeUserJoinedMaxNumber, onChangeHitNumber,
-            onChangeReward, onChangeTitle, onChangeUserGuessNumber, onGuessANumber,
+            onChangeReward, onChangeTitle, onChangeUserGuessNumber, onGuessANumber, doTransferToken, restartGame,
         }}>
             {children}
         </ContractContext.Provider>

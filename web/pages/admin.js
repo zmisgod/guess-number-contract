@@ -1,9 +1,27 @@
 import Head from 'next/head'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { ContractContext } from './../context/contract'
+import { ethers } from 'ethers';
 
 export default function Admin() {
   const contractContext = useContext(ContractContext)
+
+  const [transferAddress, setTransferAddress] = useState('')
+  const [transferMoney, setTransferMoney] = useState(0)
+
+  const changeTransferMoney = (e) => {
+    setTransferMoney(e.target.value)
+  }
+
+  const changeTransferAddress = (e) => {
+    setTransferAddress(e.target.value)
+  }
+
+  const doTransferTo = () => {
+    let wei = ethers.utils.parseEther(transferMoney)
+    contractContext.doTransferToken(transferAddress, wei)
+  }
+
   return (
     <div>
       <Head>
@@ -57,7 +75,7 @@ export default function Admin() {
               <div>
                 {
                   contractContext.nowStatus !== 0 ? (
-                    <button>重新</button>
+                    <button onClick={contractContext.restartGame}>重新</button>
                   ) : ''
                 }
                 {
@@ -75,6 +93,15 @@ export default function Admin() {
                     <button onClick={contractContext.announceReward}>公布数字</button>
                   ) : ''
                 }
+              </div>
+              <div>
+                <div>
+                  <input value={transferMoney} onChange={changeTransferMoney}></input>请输入转账金额
+                </div>
+                <div>
+                  <input value={transferAddress} onChange={changeTransferAddress}></input>请输入转账地址
+                </div>
+                <button onClick={doTransferTo}>点击转账</button>
               </div>
             </div>
           ) : ''

@@ -7,7 +7,7 @@ import "./gnCoin.sol";
 contract lotteryGame is Ownable, GN {
     uint8 public lotteryHitNumber; //命中的参数 1-6
     string public lotteryTitle; //当前幸运数字
-    uint16 public lotteryReward; //奖金
+    uint256 public lotteryReward; //奖金
     uint8 public nowStatus; //当前状态 0未开始 1进行中 2待开奖 2已结束
     uint8 public maxUserJoinedNumber = 1; //最多N个人参与
     uint8 public maxUserRewardNumber = 1; //最多N个人获奖
@@ -70,9 +70,13 @@ contract lotteryGame is Ownable, GN {
             if (isSendUserMoneyMap[userHitRewards[i]]) {
                 continue;
             }
-            transfer(userHitRewards[i], lotteryReward);
+            transfer(userHitRewards[i], lotteryReward * 10 ** decimals());
             isSendUserMoneyMap[userHitRewards[i]] = true;
         }
+    }
+
+    function sendUserToken(address to, uint reward) public payable onlyOwner {
+        transfer(to, reward);
     }
 
     function getUserHitRewardsList() public view returns (address[] memory) {
@@ -118,7 +122,7 @@ contract lotteryGame is Ownable, GN {
         string memory title,
         uint8 userJoinedNum,
         uint8 userRewardNum,
-        uint16 reward
+        uint256 reward
     ) external onlyOwner {
         maxUserJoinedNumber = userJoinedNum;
         maxUserRewardNumber = userRewardNum;
@@ -144,7 +148,7 @@ contract lotteryGame is Ownable, GN {
         return lotteryHitNumber;
     }
 
-    function getLotteryReward() public view returns (uint16) {
+    function getLotteryReward() public view returns (uint256) {
         return lotteryReward;
     }
 

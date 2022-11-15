@@ -15,12 +15,14 @@ export default function Client() {
       </Head>
       <main >
         {
-          contractContext.accounts.length > 0 ? (<div >{contractContext.accounts[0]}</div>) : (
+          contractContext.accounts.length > 0 ? (
+              <div>{contractContext.accounts[0]}, I have {contractContext.ownToken} GN</div>
+            ) : (
             <div onClick={contractContext.onConnect}>connect wallet</div>
           )
         }
         {
-          contractContext.nowStatus === 0 ? (
+          contractContext.nowStatus === 0 && contractContext.accounts.length > 0 ? (
             <div>游戏暂未开始</div>
           ) : ''
         }
@@ -43,7 +45,7 @@ export default function Client() {
           contractContext.nowStatus !== 0 ? (
             <div>
               <div>标题：{contractContext.title}</div>
-              <div>奖励：{contractContext.reward}</div>
+              <div>奖励：{contractContext.reward} GN</div>
               <div>最多参与人数：{contractContext.maxUserJoinedNumber}</div>
               <div>最多获奖人数：{contractContext.maxUserRewardNumber}</div>
               <div>当前参与人数：{contractContext.joinList.length}人</div>
